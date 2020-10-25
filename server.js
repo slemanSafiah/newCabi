@@ -246,7 +246,7 @@ io.on("connection", (socket) => {
   console.log("a user connected");
 
   socket.on("is_Online", async (data) => {
-    console.log("is online ");
+    //console.log("is online ");
     try {
       const driver = await DriverM.findOne({
         driverID: data.driverID,
@@ -264,7 +264,7 @@ io.on("connection", (socket) => {
           }
         ).then(() => {
           io.to(users.get(data.driverID)).emit("is_Online", { status: true });
-          console.log(driver);
+          //console.log(driver);
           const ISONLINE = true;
           const data1 = {
             status:
@@ -565,6 +565,7 @@ io.on("connection", (socket) => {
                     await Pending.findOne({ tripID: Trip_ID }).then(async (p) => {
                       //console.log(p);
                       let ar = p.drs;
+                      console.log(ar[0], p.drs);
                       ar[0].status = -1;
                       await Pending.updateOne(
                         { tripID: Trip_ID },
@@ -1038,8 +1039,7 @@ io.on("connection", (socket) => {
                                                           },
                                                           {
                                                             $set: {
-                                                              tripID:
-                                                                Trip_ID,
+                                                              tripID: Trip_ID,
                                                             },
                                                           }
                                                         ).then(async () => {
@@ -1109,9 +1109,8 @@ io.on("connection", (socket) => {
                 trip.tripStatusId = 2;
                 trip.tripDrivers = [];
                 await trip.save().then((res) => {
-                  console.log(res);
                   try {
-                    console.log(res, "yup");
+                    console.log(res.data, "yup");
                     axios({
                       method: "post",
                       url: "https://devmachine.taketosa.com/api/Trip/NewTrip",
@@ -1165,6 +1164,7 @@ io.on("connection", (socket) => {
     console.log("-------------------------------- this is the end");
     const tripArr = await TripM.findOne({ tripID: data.tripID });
     const tripCond = false;
+    console.log(tripArr, 'fin');
     for (let r = 0; r < tripArr.tripDrivers.length; r++) {
       if (tripArr.tripDrivers[r].driverID === data.driverID) {
         tripCond = true;
@@ -1194,6 +1194,8 @@ io.on("connection", (socket) => {
             }
           }
           console.log(array);
+          // await DriverM.updateOne({driverID:data.driverID},{$set:{isBusy:true}}).then(
+          // async()=>{
           await Pending.updateOne(
             { tripID: data.tripID },
             { $set: { drs: array } }
@@ -1279,7 +1281,7 @@ io.on("connection", (socket) => {
                                 "Content-Type": "application / json",
                               },
                             }).then((res) => {
-                              console.log(res.data);
+                              console.log("ewewrwerwerw", res.data);
                               if (res.data.status) {
                                 io.to(users.get(savedDriver.driverID)).emit(
                                   "success",
@@ -1289,13 +1291,17 @@ io.on("connection", (socket) => {
                                     passengerName: res.data.data.passengerName,
                                     passengerMobile:
                                       res.data.data.passengerMobile,
-                                    passengerImage: res.data.data.passengerImage,
+                                    passengerImage:
+                                      res.data.data.passengerImage,
                                     passengerRate: res.data.data.passengerRate,
                                   }
                                 );
-                                io.to(users.get(saved1.userID)).emit("success", {
-                                  status: true,
-                                });
+                                io.to(users.get(saved1.userID)).emit(
+                                  "success",
+                                  {
+                                    status: true,
+                                  }
+                                );
 
                                 var totalUserTime = driveTimeCalc(
                                   saved.driverTime,
@@ -1307,15 +1313,15 @@ io.on("connection", (socket) => {
                                 obj.driverTime = saved.driverTime;
                                 obj.tripCost = saved.tripCost;
                                 obj.totalUserTime = totalUserTime;
-                                admin.messaging().sendToDevice(
-                                  data.registrationToken,
-                                  {
-                                    data: {
-                                      message: `trip has been approved from ${saved.pickupAddress} to ${saved.dropoffAddress} `,
-                                    },
-                                  },
-                                  notification_options
-                                );
+                                // admin.messaging().sendToDevice(
+                                //   data.registrationToken,
+                                //   {
+                                //     data: {
+                                //       message: `trip has been approved from ${saved.pickupAddress} to ${saved.dropoffAddress} `,
+                                //     },
+                                //   },
+                                //   notification_options
+                                // );
                                 socket
                                   .to(users.get(saved.userID))
                                   .emit("tripInfo", obj);
@@ -1344,9 +1350,12 @@ io.on("connection", (socket) => {
                                     condition: true,
                                   }
                                 );
-                                io.to(users.get(saved1.userID)).emit("success", {
-                                  status: false,
-                                });
+                                io.to(users.get(saved1.userID)).emit(
+                                  "success",
+                                  {
+                                    status: false,
+                                  }
+                                );
                               }
                             });
                           } catch (error) {
@@ -1362,8 +1371,10 @@ io.on("connection", (socket) => {
               });
             });
           });
+          //})
         });
       } else {
+        console.log("adadddddddddad");
         Pending.findOne({ tripID: data.tripID }).then(async (pendingTrip) => {
           let array = pendingTrip.drs;
           var idx = 0;
@@ -1446,6 +1457,7 @@ io.on("connection", (socket) => {
                                   await TripM.remove({ _id: tr._id });
                                 });
                               } else {
+                                console.log("qqqqqqqqqqqqttttttttttttt");
                                 admin.messaging().sendToDevice(
                                   pendingTrip2.registrationToken,
                                   {
@@ -1553,337 +1565,339 @@ io.on("connection", (socket) => {
                                   { tripID: data.tripID },
                                   { $set: { drs: array } }
                                 );
-                                await Pending.findOne({ tripID: data.tripID }).then(
-                                  (updatedPending3) => {
-                                    console.log(
-                                      updatedPending3,
-                                      "after second ignore"
-                                    );
-                                    var idx3 = -1;
-                                    var array6 = updatedPending3.drs;
-                                    for (let n = 0; n < array6.length; n++) {
-                                      if (array6[n].status === 0) {
-                                        idx3 = n;
-                                        break;
-                                      }
+                                await Pending.findOne({
+                                  tripID: data.tripID,
+                                }).then((updatedPending3) => {
+                                  console.log(
+                                    updatedPending3,
+                                    "after second ignore"
+                                  );
+                                  var idx3 = -1;
+                                  var array6 = updatedPending3.drs;
+                                  for (let n = 0; n < array6.length; n++) {
+                                    if (array6[n].status === 0) {
+                                      idx3 = n;
+                                      break;
                                     }
-                                    if (idx3 === -1) {
-                                      console.log(updatedPending3, 33333333);
-                                      TripM.findOne({ tripID: data.tripID }).then(
-                                        async (trip11) => {
-                                          var finalDrivers = [];
-                                          for (
-                                            let q = 0;
-                                            q < array6.length;
-                                            q++
-                                          ) {
-                                            await DriverM.findOne({
-                                              driverID: array6[q].driverID,
-                                            }).then((driver) => {
-                                              finalDrivers.push({
-                                                driverID: driver.driverID,
-                                                requestStatus: array6[q].status,
-                                                lat:
-                                                  driver.location.coordinates[0],
-                                                lng:
-                                                  driver.location.coordinates[1],
-                                                actionDate:
-                                                  driver.updateLocationDate,
-                                              });
-                                            });
-                                          }
-                                          console.log(finalDrivers, "final");
-                                          let data1 = trip11;
-                                          data1.tripStatusId = 2;
-                                          data1.tripDrivers = finalDrivers;
-                                          console.log(data1);
-                                          await TripM.updateOne(
-                                            { tripID: data.tripID },
-                                            {
-                                              $set: {
-                                                tripStatusId: 2,
-                                                tripDrivers: finalDrivers,
-                                              },
-                                            }
-                                          ).then(() => {
-                                            TripM.findOne({
-                                              tripID: data.tripID,
-                                            }).then((res1) => {
-                                              try {
-                                                console.log(res1, "important");
-                                                axios({
-                                                  method: "post",
-                                                  url:
-                                                    "https://devmachine.taketosa.com/api/Trip/NewTrip",
-                                                  data: res1,
-                                                  headers: {
-                                                    Authorization: `Bearer ${updatedPending3.loginToken}`,
-                                                    "Content-Type":
-                                                      "application / json",
-                                                  },
-                                                }).then((res3) => {
-                                                  if (
-                                                    !res3 ||
-                                                    res3.data.status === false
-                                                  ) {
-                                                    Constraints.updateOne(
-                                                      {
-                                                        name: "next",
-                                                      },
-                                                      {
-                                                        $set: {
-                                                          tripID: data.tripID,
-                                                        },
-                                                      }
-                                                    ).then(async () => {
-                                                      var tr = await TripM.findOne(
-                                                        { tripID: data.tripID }
-                                                      );
-                                                      await TripM.remove({
-                                                        _id: tr._id,
-                                                      });
-                                                    });
-                                                  } else {
-                                                    admin
-                                                      .messaging()
-                                                      .sendToDevice(
-                                                        updatedPending3.registrationToken,
-                                                        {
-                                                          data: {
-                                                            message:
-                                                              "no driver found",
-                                                          },
-                                                        },
-                                                        notification_options
-                                                      );
-                                                  }
-                                                });
-                                              } catch (error) {
-                                                console.log("abc");
-                                              }
+                                  }
+                                  if (idx3 === -1) {
+                                    console.log(updatedPending3, 33333333);
+                                    TripM.findOne({ tripID: data.tripID }).then(
+                                      async (trip11) => {
+                                        var finalDrivers = [];
+                                        for (
+                                          let q = 0;
+                                          q < array6.length;
+                                          q++
+                                        ) {
+                                          await DriverM.findOne({
+                                            driverID: array6[q].driverID,
+                                          }).then((driver) => {
+                                            finalDrivers.push({
+                                              driverID: driver.driverID,
+                                              requestStatus: array6[q].status,
+                                              lat:
+                                                driver.location.coordinates[0],
+                                              lng:
+                                                driver.location.coordinates[1],
+                                              actionDate:
+                                                driver.updateLocationDate,
                                             });
                                           });
                                         }
-                                      );
-                                    } else {
-                                      DriverM.findOne({
-                                        driverID: array6[idx3].driverID,
-                                      }).then((dr) => {
-                                        console.log(dr, "third driver");
-                                        Pending.findOne({
-                                          tripID: data.tripID,
-                                        }).then(async (pen) => {
-                                          console.log(pen, "pennnn");
-                                          var from_to = pen;
-                                          var reachTime1 = await DistinationDuration(
-                                            pen.pickupLat,
-                                            pen.pickupLng,
-                                            dr.location.coordinates[1],
-                                            dr.location.coordinates[0]
-                                          );
-                                          var reachTime = (
-                                            reachTime1[0].duration.value / 60
-                                          ).toFixed();
-                                          var arriveTime = driveTimeCalc(
-                                            0,
-                                            reachTime
-                                          );
-                                          admin.messaging().sendToDevice(
-                                            dr.tokenID,
-                                            {
-                                              data: {
-                                                message: "you have a new trip",
-                                                tripID: `${pen.tripID}`,
-                                                pickupLat: `${pen.pickupLat}`,
-                                                pickupLng: `${pen.pickupLng}`,
-                                                pickupAddress: `${pen.pickupAddress}`,
-                                                dropoffLat: `${pen.dropoffLat}`,
-                                                dropoffLng: `${pen.dropoffLng}`,
-                                                dropoffAddress: `${pen.dropoffAddress}`,
-                                                userID: `${pen.userId}`,
-                                                driverTime: `${pen.driverTime}`,
-                                                reachTime: `${reachTime}`,
-                                                arriveTime: `${arriveTime}`,
-                                                tripCost: `${pen.tripCost}`,
-                                                distance: `${pen.distance}`,
-                                                category: `${pen.category}`,
-                                              },
-                                              notification: {
-                                                title: "You Have New Trip",
-                                                body: `from ${pen.pickupAddress} to ${pen.dropoffAddress}`,
-                                                color: "#151515",
-                                                sound: "ring",
-                                                //requireInteraction: true,
-                                                clickAction: "DriverHomeActivity",
-                                                channelId: "fcm_default_channel",
-                                                priority: "high",
-                                              },
+                                        console.log(finalDrivers, "final");
+                                        let data1 = trip11;
+                                        data1.tripStatusId = 2;
+                                        data1.tripDrivers = finalDrivers;
+                                        console.log(data1);
+                                        await TripM.updateOne(
+                                          { tripID: data.tripID },
+                                          {
+                                            $set: {
+                                              tripStatusId: 2,
+                                              tripDrivers: finalDrivers,
                                             },
-                                            notification_options
-                                          );
-                                          from_to.reachTime = reachTime;
-                                          from_to.arriveTime = arriveTime;
-                                          socket
-                                            .to(users.get(dr.driverID))
-                                            .emit("tripInfo", from_to);
-                                          await Pending.findOne({
+                                          }
+                                        ).then(() => {
+                                          TripM.findOne({
                                             tripID: data.tripID,
-                                          }).then(async (trip2) => {
-                                            var arr3 = trip2.drs;
-                                            arr3[idx3].status = -1;
-                                            await Pending.updateOne(
-                                              { tripID: data.tripID },
-                                              { $set: { drs: arr3 } }
-                                            );
-                                          });
-                                          var now115 = 0;
-                                          let interval15 = setInterval(
-                                            async function () {
-                                              now115++;
-                                              console.log(now115, "now115");
-                                              await Pending.findOne({
-                                                tripID: data.tripID,
-                                              }).then((tr13) => {
+                                          }).then((res1) => {
+                                            try {
+                                              console.log(res1, "important");
+                                              axios({
+                                                method: "post",
+                                                url:
+                                                  "https://devmachine.taketosa.com/api/Trip/NewTrip",
+                                                data: res1,
+                                                headers: {
+                                                  Authorization: `Bearer ${updatedPending3.loginToken}`,
+                                                  "Content-Type":
+                                                    "application / json",
+                                                },
+                                              }).then((res3) => {
+                                                console.log("popopop", res3);
                                                 if (
-                                                  tr13.drs[idx3].status !== -1
+                                                  !res3 ||
+                                                  res3.data.status === false
                                                 ) {
-                                                  clearInterval(interval15);
+                                                  Constraints.updateOne(
+                                                    {
+                                                      name: "next",
+                                                    },
+                                                    {
+                                                      $set: {
+                                                        tripID: data.tripID,
+                                                      },
+                                                    }
+                                                  ).then(async () => {
+                                                    var tr = await TripM.findOne(
+                                                      { tripID: data.tripID }
+                                                    );
+                                                    await TripM.remove({
+                                                      _id: tr._id,
+                                                    });
+                                                  });
+                                                } else {
+                                                  admin
+                                                    .messaging()
+                                                    .sendToDevice(
+                                                      updatedPending3.registrationToken,
+                                                      {
+                                                        data: {
+                                                          message:
+                                                            "no driver found",
+                                                        },
+                                                      },
+                                                      notification_options
+                                                    );
                                                 }
                                               });
-                                              if (now115 === 20) {
-                                                Pending.findOne({
-                                                  tripID: data.tripID,
-                                                }).then(async (pen115) => {
-                                                  console.log("needed", pen115);
-                                                  if (
-                                                    pen115.drs[idx3].status === -1
-                                                  ) {
-                                                    var array77 = pen115.drs;
-                                                    array77[idx3].status = 3;
-                                                    await Pending.updateOne(
-                                                      { tripID: data.tripID },
-                                                      { $set: { drs: array77 } }
-                                                    ).then(async () => {
-                                                      var array123 = [];
-                                                      for (
-                                                        let r = 0;
-                                                        r < pen115.drs.length;
-                                                        r++
-                                                      ) {
-                                                        await DriverM.findOne({
-                                                          driverID:
-                                                            pen115.drs[r]
-                                                              .driverID,
-                                                        }).then((tmpDriver) => {
-                                                          array123.push({
-                                                            driverID:
-                                                              tmpDriver.driverID,
-                                                            requestStatus:
-                                                              pen115.drs[r]
-                                                                .status,
-                                                            lat:
-                                                              tmpDriver.location
-                                                                .coordinates[0],
-                                                            lng:
-                                                              tmpDriver.location
-                                                                .coordinates[1],
-                                                            actionDate:
-                                                              tmpDriver.updateLocationDate,
-                                                          });
-                                                        });
-                                                      }
-                                                      console.log(array123);
-                                                      await TripM.updateOne(
-                                                        { tripID: data.tripID },
-                                                        {
-                                                          $set: {
-                                                            tripStatusId: 2,
-                                                            tripDrivers: array123,
-                                                          },
-                                                        }
-                                                      ).then(() => {
-                                                        TripM.findOne({
-                                                          tripID: data.tripID,
-                                                        }).then((trip321) => {
-                                                          try {
-                                                            console.log(
-                                                              trip321,
-                                                              "1563"
-                                                            );
-                                                            axios({
-                                                              method: "post",
-                                                              url:
-                                                                "https://devmachine.taketosa.com/api/Trip/NewTrip",
-                                                              data: trip321,
-                                                              headers: {
-                                                                Authorization: `Bearer ${pen115.loginToken}`,
-                                                                "Content-Type":
-                                                                  "application / json",
-                                                              },
-                                                            }).then((res3) => {
-                                                              if (
-                                                                !res3 ||
-                                                                res3.data
-                                                                  .status ===
-                                                                false
-                                                              ) {
-                                                                Constraints.updateOne(
-                                                                  {
-                                                                    name: "next",
-                                                                  },
-                                                                  {
-                                                                    $set: {
-                                                                      tripID: data.tripID
-                                                                    },
-                                                                  }
-                                                                ).then(
-                                                                  async () => {
-                                                                    var tr = await TripM.findOne(
-                                                                      {
-                                                                        tripID:
-                                                                          data.tripID,
-                                                                      }
-                                                                    );
-                                                                    await TripM.remove(
-                                                                      {
-                                                                        _id:
-                                                                          tr._id,
-                                                                      }
-                                                                    );
-                                                                  }
-                                                                );
-                                                              } else {
-                                                                admin
-                                                                  .messaging()
-                                                                  .sendToDevice(
-                                                                    pen115.registrationToken,
-                                                                    {
-                                                                      data: {
-                                                                        message:
-                                                                          "no driver found",
-                                                                      },
-                                                                    },
-                                                                    notification_options
-                                                                  );
-                                                              }
-                                                            });
-                                                          } catch (error) {
-                                                            console.log("abc");
-                                                          }
-                                                        });
-                                                      });
-                                                    });
-                                                  }
-                                                });
-                                              }
+                                            } catch (error) {
+                                              console.log("abc");
+                                            }
+                                          });
+                                        });
+                                      }
+                                    );
+                                  } else {
+                                    DriverM.findOne({
+                                      driverID: array6[idx3].driverID,
+                                    }).then((dr) => {
+                                      console.log(dr, "third driver");
+                                      Pending.findOne({
+                                        tripID: data.tripID,
+                                      }).then(async (pen) => {
+                                        console.log(pen, "pennnn");
+                                        var from_to = pen;
+                                        var reachTime1 = await DistinationDuration(
+                                          pen.pickupLat,
+                                          pen.pickupLng,
+                                          dr.location.coordinates[1],
+                                          dr.location.coordinates[0]
+                                        );
+                                        var reachTime = (
+                                          reachTime1[0].duration.value / 60
+                                        ).toFixed();
+                                        var arriveTime = driveTimeCalc(
+                                          0,
+                                          reachTime
+                                        );
+                                        admin.messaging().sendToDevice(
+                                          dr.tokenID,
+                                          {
+                                            data: {
+                                              message: "you have a new trip",
+                                              tripID: `${pen.tripID}`,
+                                              pickupLat: `${pen.pickupLat}`,
+                                              pickupLng: `${pen.pickupLng}`,
+                                              pickupAddress: `${pen.pickupAddress}`,
+                                              dropoffLat: `${pen.dropoffLat}`,
+                                              dropoffLng: `${pen.dropoffLng}`,
+                                              dropoffAddress: `${pen.dropoffAddress}`,
+                                              userID: `${pen.userId}`,
+                                              driverTime: `${pen.driverTime}`,
+                                              reachTime: `${reachTime}`,
+                                              arriveTime: `${arriveTime}`,
+                                              tripCost: `${pen.tripCost}`,
+                                              distance: `${pen.distance}`,
+                                              category: `${pen.category}`,
                                             },
-                                            1000
+                                            notification: {
+                                              title: "You Have New Trip",
+                                              body: `from ${pen.pickupAddress} to ${pen.dropoffAddress}`,
+                                              color: "#151515",
+                                              sound: "ring",
+                                              //requireInteraction: true,
+                                              clickAction: "DriverHomeActivity",
+                                              channelId: "fcm_default_channel",
+                                              priority: "high",
+                                            },
+                                          },
+                                          notification_options
+                                        );
+                                        from_to.reachTime = reachTime;
+                                        from_to.arriveTime = arriveTime;
+                                        socket
+                                          .to(users.get(dr.driverID))
+                                          .emit("tripInfo", from_to);
+                                        await Pending.findOne({
+                                          tripID: data.tripID,
+                                        }).then(async (trip2) => {
+                                          var arr3 = trip2.drs;
+                                          arr3[idx3].status = -1;
+                                          await Pending.updateOne(
+                                            { tripID: data.tripID },
+                                            { $set: { drs: arr3 } }
                                           );
                                         });
+                                        var now115 = 0;
+                                        let interval15 = setInterval(
+                                          async function () {
+                                            now115++;
+                                            console.log(now115, "now115");
+                                            await Pending.findOne({
+                                              tripID: data.tripID,
+                                            }).then((tr13) => {
+                                              if (
+                                                tr13.drs[idx3].status !== -1
+                                              ) {
+                                                clearInterval(interval15);
+                                              }
+                                            });
+                                            if (now115 === 20) {
+                                              Pending.findOne({
+                                                tripID: data.tripID,
+                                              }).then(async (pen115) => {
+                                                console.log("needed", pen115);
+                                                if (
+                                                  pen115.drs[idx3].status === -1
+                                                ) {
+                                                  var array77 = pen115.drs;
+                                                  array77[idx3].status = 3;
+                                                  await Pending.updateOne(
+                                                    { tripID: data.tripID },
+                                                    { $set: { drs: array77 } }
+                                                  ).then(async () => {
+                                                    var array123 = [];
+                                                    for (
+                                                      let r = 0;
+                                                      r < pen115.drs.length;
+                                                      r++
+                                                    ) {
+                                                      await DriverM.findOne({
+                                                        driverID:
+                                                          pen115.drs[r]
+                                                            .driverID,
+                                                      }).then((tmpDriver) => {
+                                                        array123.push({
+                                                          driverID:
+                                                            tmpDriver.driverID,
+                                                          requestStatus:
+                                                            pen115.drs[r]
+                                                              .status,
+                                                          lat:
+                                                            tmpDriver.location
+                                                              .coordinates[0],
+                                                          lng:
+                                                            tmpDriver.location
+                                                              .coordinates[1],
+                                                          actionDate:
+                                                            tmpDriver.updateLocationDate,
+                                                        });
+                                                      });
+                                                    }
+                                                    console.log(array123);
+                                                    await TripM.updateOne(
+                                                      { tripID: data.tripID },
+                                                      {
+                                                        $set: {
+                                                          tripStatusId: 2,
+                                                          tripDrivers: array123,
+                                                        },
+                                                      }
+                                                    ).then(() => {
+                                                      TripM.findOne({
+                                                        tripID: data.tripID,
+                                                      }).then((trip321) => {
+                                                        try {
+                                                          console.log(
+                                                            trip321,
+                                                            "1563"
+                                                          );
+                                                          axios({
+                                                            method: "post",
+                                                            url:
+                                                              "https://devmachine.taketosa.com/api/Trip/NewTrip",
+                                                            data: trip321,
+                                                            headers: {
+                                                              Authorization: `Bearer ${pen115.loginToken}`,
+                                                              "Content-Type":
+                                                                "application / json",
+                                                            },
+                                                          }).then((res3) => {
+                                                            if (
+                                                              !res3 ||
+                                                              res3.data
+                                                                .status ===
+                                                              false
+                                                            ) {
+                                                              Constraints.updateOne(
+                                                                {
+                                                                  name: "next",
+                                                                },
+                                                                {
+                                                                  $set: {
+                                                                    tripID:
+                                                                      data.tripID,
+                                                                  },
+                                                                }
+                                                              ).then(
+                                                                async () => {
+                                                                  var tr = await TripM.findOne(
+                                                                    {
+                                                                      tripID:
+                                                                        data.tripID,
+                                                                    }
+                                                                  );
+                                                                  await TripM.remove(
+                                                                    {
+                                                                      _id:
+                                                                        tr._id,
+                                                                    }
+                                                                  );
+                                                                }
+                                                              );
+                                                            } else {
+                                                              admin
+                                                                .messaging()
+                                                                .sendToDevice(
+                                                                  pen115.registrationToken,
+                                                                  {
+                                                                    data: {
+                                                                      message:
+                                                                        "no driver found",
+                                                                    },
+                                                                  },
+                                                                  notification_options
+                                                                );
+                                                            }
+                                                          });
+                                                        } catch (error) {
+                                                          console.log("abc");
+                                                        }
+                                                      });
+                                                    });
+                                                  });
+                                                }
+                                              });
+                                            }
+                                          },
+                                          1000
+                                        );
                                       });
-                                    }
+                                    });
                                   }
-                                );
+                                });
                               } else {
                                 //repeat driver responed
                               }
@@ -1939,20 +1953,6 @@ io.on("connection", (socket) => {
                 },
                 notification_options
               );
-            } else if (!res || res.data.status === false) {
-              Constraints.updateOne(
-                {
-                  name: "next",
-                },
-                {
-                  $set: {
-                    tripID: data.tripID - 1,
-                  },
-                }
-              ).then(async () => {
-                var tr = await TripM.findOne({ tripID: data.tripID });
-                await TripM.remove({ _id: tr._id });
-              });
             } else {
               io.to(users.get(data.driverID)).emit("CancelOnWay", {
                 status: false,
@@ -2018,7 +2018,7 @@ io.on("connection", (socket) => {
               "Accept-Language": data.Language,
             },
           }).then((res) => {
-            console.log(res);
+            console.log("aqqqqqqqq", res);
             if (!res || res.data.status === false) {
               Constraints.updateOne(
                 {
@@ -2055,7 +2055,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("updatelocation", (data) => {
-    console.log(data);
+    //console.log(data);
     var newLat = data.lat;
     var newLong = data.long;
     try {
@@ -2127,7 +2127,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("getavailable", (data) => {
-    console.log(data);
+    //console.log(data);
     const id = uuidv4();
     userinterval.set(data.userid, id);
     try {
@@ -2174,15 +2174,14 @@ io.on("connection", (socket) => {
                 ? -1
                 : (time[0].duration.value / 60).toFixed(),
           };
-          console.log(data1);
+          //console.log(data1);
           let user_id = users.get(data.userid);
           // console.log(user_id);
           io.to(user_id).emit("getavailable", data1);
-        }
-        else {
+        } else {
           const data1 = {
             drivers: [],
-            time: -1
+            time: -1,
           };
           let user_id = users.get(data.userid);
           // console.log(user_id);
@@ -2244,15 +2243,14 @@ io.on("connection", (socket) => {
               userinterval.get(data.userid) == id
             ) {
               let user_id = users.get(data.userid);
-              console.log(user_id);
+              //console.log(user_id);
 
               io.to(user_id).emit("getavailable", data1);
             }
-          }
-          else {
+          } else {
             const data1 = {
               drivers: [],
-              time: -1
+              time: -1,
             };
             if (
               users.get(data.userid) != undefined &&
@@ -2265,7 +2263,6 @@ io.on("connection", (socket) => {
             }
           }
           //console.log(data1.time)
-
         });
       };
       var interval = setInterval(fun, 20000);
@@ -2277,7 +2274,7 @@ io.on("connection", (socket) => {
   socket.on("listCategory", async (data) => {
     const id = uuidv4();
     listinterval.set(data.userId, id);
-    console.log(data)
+    // console.log(data);
     var discountType = -1;
     var discountValue = 0;
 
@@ -2357,7 +2354,7 @@ io.on("connection", (socket) => {
                     data.pickupLng,
                     data.pickupLat
                   ).then(async (driverTime) => {
-                    console.log("nm", i, driver.driverID);
+                    // console.log("nm", i, driver.driverID);
                     const Cost = await tripCost(
                       data.pickupLng,
                       data.pickupLat,
@@ -2399,7 +2396,7 @@ io.on("connection", (socket) => {
               mainCatTime,
               driveTime,
             };
-            console.log(data1, users.get(data.userId), data.userId);
+            //console.log(data1, users.get(data.userId), data.userId);
             var user_id = users.get(data.userId);
             io.to(user_id).emit("listCategory", data1);
           });
@@ -2496,14 +2493,14 @@ io.on("connection", (socket) => {
                 driveTime,
               };
               //  console.log(data1);
-              console.log(data.userId, users.get(data.userId));
+              //console.log(data.userId, users.get(data.userId));
 
               if (
                 users.get(data.userId) != undefined &&
                 listinterval.get(data.userId) == id
               ) {
                 var user_id = users.get(data.userId);
-                console.log(data.userId, users.get(data.userId));
+                // console.log(data.userId, users.get(data.userId));
                 io.to(user_id).emit("listCategory", data1);
               }
             });
@@ -2908,7 +2905,6 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", async (id) => {
     try {
-
       const getKey = await function w() {
         return [...users].find(([key, val]) => val == socket.id)[0];
       };
